@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaSave } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router";
@@ -7,7 +6,7 @@ import { PhotoContainer } from "../components/ui/image";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { AuthLayout } from "../layouts/auth";
-import { api_storage_public, api_token, api_url } from "../lib/utils";
+import { axios_api_init } from "../lib/utils";
 import Loading from "/src/assets/images/loading.gif";
 import ProfileDefault from "/src/assets/images/profile.png";
 
@@ -25,16 +24,12 @@ export const ProfilePage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await axios.get(`${api_url}/profile`, {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "get",
+      const res = await axios_api_init.get(`/profile`, {
+        method: "GET",
       });
 
       setProfile(res.data.user);
-      setImagePreview(`${api_storage_public}/images/${res.data.user.avatar}`);
+      setImagePreview(`${res.data.user.r2_avatar_url}`);
     };
 
     fetchData();
@@ -53,16 +48,15 @@ export const ProfilePage = () => {
         profile.password && formData.append("password", profile.password);
         profile.avatar && formData.append("avatar", profile.avatar);
 
-        const res = await axios.post(
-          `${api_url}/api/users/${params.id}`,
+        const res = await axios_api_init.post(
+          `/api/users/${params.id}`,
           formData,
           {
             headers: {
-              Authorization: `Bearer ${api_token}`,
               "Content-Type": "multipart/form-data",
             },
-            method: "post",
-          }
+            method: "POST",
+          },
         );
 
         if (res.data) {
@@ -77,7 +71,7 @@ export const ProfilePage = () => {
         setIsLoading(false);
       }
     },
-    [params.id, profile, navigate]
+    [params.id, profile, navigate],
   );
 
   return (

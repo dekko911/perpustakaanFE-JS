@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { Link } from "react-router";
@@ -14,7 +13,7 @@ import {
 } from "../../components/ui/table";
 import { AuthLayout } from "../../layouts/auth";
 import { swalDialogConfirmForRoles, swalToast } from "../../lib/sweet-alert";
-import { api_token, api_url } from "../../lib/utils";
+import { axios_api_init } from "../../lib/utils";
 import Loading from "/src/assets/images/pyramid-19507.gif";
 
 export const RolesPage = () => {
@@ -24,12 +23,8 @@ export const RolesPage = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const res = await axios.get(`${api_url}/api/users?page=2`, {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "get",
+      const res = await axios_api_init.get(`/api/users?page=1`, {
+        method: "GET",
       });
 
       setUsers(res.data.data);
@@ -42,20 +37,14 @@ export const RolesPage = () => {
 
   const handleDelete = async (userID) => {
     try {
-      const user = await axios.get(`${api_url}/api/role/user/${userID}`, {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "get",
+      const user = await axios_api_init.get(`/api/role/user/${userID}`, {
+        method: "GET",
       });
 
       const role = {
         key: user.data.data.role?.id,
         value: user.data.data.role?.name,
       };
-
-      // TODO: jika role tidak ada value, return error
 
       const options = {};
 
@@ -67,18 +56,14 @@ export const RolesPage = () => {
         "Disconnect User & Role",
         "Are You Sure?",
         "info",
-        options
+        options,
       ).then(async (equals) => {
         if (equals.isConfirmed) {
-          const res = await axios.delete(
-            `${api_url}/api/user/${userID}/role/${equals.value}`,
+          const res = await axios_api_init.delete(
+            `/api/user/${userID}/role/${equals.value}`,
             {
-              headers: {
-                Authorization: `Bearer ${api_token}`,
-                "Content-Type": "application/json",
-              },
-              method: "delete",
-            }
+              method: "DELETE",
+            },
           );
 
           if (res.data) {
@@ -88,7 +73,7 @@ export const RolesPage = () => {
             setUsers((prev) =>
               prev
                 .filter((user) => user.id !== userID)
-                .roles?.filter((role) => role.id !== equals.value)
+                .roles?.filter((role) => role.id !== equals.value),
             );
           }
         }

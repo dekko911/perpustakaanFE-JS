@@ -1,16 +1,17 @@
-import { useState } from "react";
-import { FaSave } from "react-icons/fa";
-import { useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { GrDocumentUpdate } from "react-icons/gr";
+import { useNavigate, useParams } from "react-router";
 import { Button } from "../../components/ui/button";
-import { InputCreate, InputCreateFile } from "../../components/ui/input";
+import { InputUpdate, InputUpdateFile } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { AuthLayout } from "../../layouts/auth";
 import { swalToast } from "../../lib/sweet-alert";
 import { axios_api_init, cn } from "../../lib/utils";
 import Loading from "/src/assets/images/loading.gif";
 
-export const CreateUserPage = () => {
+export const UpdateUserPage = () => {
   const navigate = useNavigate();
+  const params = useParams();
 
   const [form, setForm] = useState({
     name: "",
@@ -18,10 +19,31 @@ export const CreateUserPage = () => {
     password: "",
     avatar: null,
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPhoto, setShowPhoto] = useState(null);
 
-  const handleCreate = async (e) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewPhoto, setPreviewPhoto] = useState(null);
+
+  const tempPhotoRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const res = await axios_api_init.get(`/api/user/${params.id}`, {
+        method: "GET",
+      });
+
+      setForm({
+        name: res.data.data.name,
+        email: res.data.data.email,
+      });
+
+      tempPhotoRef.current = res.data.data.r2_avatar_url;
+      setPreviewPhoto(tempPhotoRef?.current);
+    };
+
+    fetchUser();
+  }, [params.id]);
+
+  const handleUpdate = async (e) => {
     e.preventDefault();
 
     try {
@@ -34,19 +56,20 @@ export const CreateUserPage = () => {
       form.password && formData.append("password", form.password);
       form.avatar && formData.append("avatar", form.avatar);
 
-      const res = await axios_api_init.post(`/api/user`, formData, {
+      const res = await axios_api_init.put(`/api/user/${params.id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        method: "POST",
+        method: "PUT",
       });
 
       if (res.data) {
-        swalToast("success", `${res.data.message}`, 235);
+        swalToast("success", `${res.data.message}`, 250);
         navigate("/users");
       }
     } catch (err) {
       console.error(err);
+      swalToast("error", `${err.response.data.error}`);
     } finally {
       setIsLoading(false);
     }
@@ -54,48 +77,51 @@ export const CreateUserPage = () => {
 
   return (
     <AuthLayout>
-      <div className="p-2 h-[74vh]">
-        <form onSubmit={handleCreate} method="POST">
+      <div>
+        <form method="PUT" onSubmit={handleUpdate}>
           <Label>Nama</Label>
-          <InputCreate
+          <InputUpdate
             name="name"
-            placeholder="Masukkan Nama Anda . . ."
+            placeholder="Enter your name..."
+            defaultValue={form.name}
             onKeyUp={(e) => setForm({ ...form, name: e.target.value })}
           />
 
           <Label>Email</Label>
-          <InputCreate
+          <InputUpdate
             type="email"
             name="email"
-            placeholder="Masukkan Email Anda . . ."
+            placeholder="example@example.com"
+            defaultValue={form.email}
             onKeyUp={(e) => setForm({ ...form, email: e.target.value })}
           />
 
           <Label>Password</Label>
-          <InputCreate
+          <InputUpdate
             type="password"
             name="password"
-            placeholder="********"
+            placeholder="Enter your password..."
+            defaultValue={form.password}
             onKeyUp={(e) => setForm({ ...form, password: e.target.value })}
           />
 
           <Label>Avatar</Label>
           <img
-            src={showPhoto}
-            alt="photo temp"
             className={cn(
-              "size-28 my-3 rounded-md",
-              showPhoto ? "block" : "hidden",
+              "rounded-xl size-34 my-3",
+              previewPhoto === "-" ? "hidden" : "block",
             )}
+            src={previewPhoto}
+            alt="avatar old"
           />
-          <InputCreateFile
-            name="avatar"
+          <InputUpdateFile
             onChange={(e) => {
               const file = e.target.files[0];
+
               if (file) {
-                setShowPhoto(URL.createObjectURL(file));
+                setPreviewPhoto(URL.createObjectURL(file));
               } else {
-                setShowPhoto("");
+                setPreviewPhoto(tempPhotoRef?.current);
               }
 
               setForm({ ...form, avatar: file });
@@ -106,9 +132,9 @@ export const CreateUserPage = () => {
             {isLoading ? (
               <img src={Loading} alt="" className="w-5" />
             ) : (
-              <FaSave />
+              <GrDocumentUpdate />
             )}
-            Simpan
+            Update
           </Button>
         </form>
       </div>

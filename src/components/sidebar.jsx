@@ -1,4 +1,3 @@
-import axios from "axios";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { FaSyncAlt, FaUsers, FaUsersCog } from "react-icons/fa";
@@ -7,7 +6,7 @@ import { SiBookstack } from "react-icons/si";
 import { Link, useLocation, useNavigate } from "react-router";
 import LogoBook from "../assets/images/bookshead.png";
 import { swalToast } from "../lib/sweet-alert";
-import { api_storage_public, api_token, api_url, cn } from "../lib/utils";
+import { axios_api_init, cn } from "../lib/utils";
 import { ButtonLogout } from "./ui/button";
 import { ProfileCard } from "./ui/card";
 import { PhotoContainer } from "./ui/image";
@@ -17,18 +16,14 @@ export const Sidebar = ({ className = "" }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [user, setUser] = useState([]);
-  const avatarAPI = `${api_storage_public}/images/profile/${user.avatar}`;
+  const [user, setUser] = useState({});
+  const avatarAPI = `${user.r2_avatar_url}`;
   const avatar = avatarAPI !== "-" ? avatarAPI : DefaultProfile;
 
   useEffect(() => {
     const fetchUser = async () => {
-      const res = await axios.get(`${api_url}/profile`, {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "get",
+      const res = await axios_api_init.get(`/profile`, {
+        method: "GET",
       });
 
       setUser(res.data.data);
@@ -38,21 +33,13 @@ export const Sidebar = ({ className = "" }) => {
   }, []);
 
   const handleLogout = async () => {
-    const res = await axios.post(
-      `${api_url}/api/logout`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "post",
-      }
-    );
+    const res = await axios_api_init.post(`/api/logout`, undefined, {
+      method: "POST",
+    });
 
     if (res.data.code === 200) {
       swalToast("success", `${res.data.message}`, 290);
-      Cookies.remove("token");
+      Cookies.remove("token", { path: "/" });
       navigate("/");
     }
   };
@@ -61,7 +48,7 @@ export const Sidebar = ({ className = "" }) => {
     <div
       className={cn(
         "w-[18rem] h-screen pt-4 ps-2 bg-transparent z-10 flex flex-col gap-y-1",
-        className
+        className,
       )}
     >
       <Link

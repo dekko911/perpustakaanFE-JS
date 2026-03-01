@@ -10,9 +10,8 @@ import {
   THeadCell,
 } from "../../components/ui/table";
 import { AuthLayout } from "../../layouts/auth";
+import { axios_api_init } from "../../lib/utils";
 import Loading from "/src/assets/images/pyramid-19507.gif";
-import axios from "axios";
-import { api_storage_public, api_token, api_url } from "../../lib/utils";
 
 export const MembersPage = () => {
   const [members, setMembers] = useState([]);
@@ -21,12 +20,8 @@ export const MembersPage = () => {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      const res = await axios.get(`${api_url}/api/members`, {
-        headers: {
-          Authorization: `Bearer ${api_token}`,
-          "Content-Type": "application/json",
-        },
-        method: "get",
+      const res = await axios_api_init.get(`/api/members`, {
+        method: "GET",
       });
 
       setMembers(res.data.data);
@@ -82,11 +77,9 @@ export const MembersPage = () => {
                 <TBodyCell>{member.no_telepon}</TBodyCell>
                 <TBodyCell>
                   <img
-                    src={
-                      api_storage_public +
-                      `/images/avatar/${member.profil_anggota}`
-                    }
+                    src={`${member.r2_profil_url}`}
                     alt="profil"
+                    className="size-30"
                   />
                 </TBodyCell>
                 <TBodyCellAction />
